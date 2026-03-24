@@ -1,0 +1,47 @@
+{
+	"name": "hexagonal-base-template",
+	"version": "1.0.0",
+	"main": "index.js",
+	"scripts": {
+		"start:dev": "bun --watch src/index.ts",
+		"build": "bun run tsc -p tsconfig.json",
+		"start": "bun dist/index.js",
+		"start:prod": "bun dist/index.js",
+		"lint": "bun run eslint src --ext .ts",
+		"lint:fix": "bun run eslint src --ext .ts --fix",
+		"prisma:generate": "bun run --env-file=.env prisma generate",
+		"prisma:push": "bun run --env-file=.env prisma db push",
+		"prisma:migrate": "bun run --env-file=.env prisma migrate dev",
+		"prisma:studio": "bun run --env-file=.env prisma studio",
+		"prisma:seed": "bun run --env-file=.env prisma db seed",
+		"test": "bun test ./tests/**/*.test.ts --coverage"
+	},
+	"author": "",
+	"license": "ISC",
+	"description": "Single-tenant REST API template with Hexagonal Architecture",
+	"devDependencies": {
+		"@types/cors": "^2.8.17",
+		"@types/express": "^5.0.0",
+		"@types/jsonwebtoken": "^9.0.10",
+		"@types/node": "^22.10.5",
+		"@typescript-eslint/eslint-plugin": "^8.19.0",
+		"@typescript-eslint/parser": "^8.19.0",
+		"eslint": "^9.17.0",
+		"prisma": "^7.3.0",
+		"typescript": "^5.7.2",
+		"typescript-eslint": "^8.19.0"
+	},
+	"dependencies": {
+		"@prisma/client": "^7.3.0",
+		"bcrypt-ts": "^7.1.0",
+		"body-parser": "^2.2.0",
+		"cors": "^2.8.5",
+		"dotenv": "^16.4.7",
+		"express": "^4.21.2",
+		"helmet": "^8.0.0",
+		"jsonwebtoken": "^9.0.2",
+		"winston": "^3.18.3",
+		"winston-daily-rotate-file": "^5.0.0",
+		"zod": "^4.1.12"
+	}
+}
