@@ -12,10 +12,11 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
   schemas  = ["tenant_template"]
 }
 
-// ──────────────────── USERS ────────────────────
+// ──────────────────── USERS ────────────────────────
 
 model User {
   id          String    @id @default(cuid())
@@ -34,7 +35,7 @@ model User {
   @@schema("tenant_template")
 }
 
-// ──────────────────── PROFILE ────────────────────
+// ──────────────────── PROFILE ────────────────────────
 
 model Profile {
   id        String   @id @default(cuid())
@@ -51,7 +52,7 @@ model Profile {
   @@schema("tenant_template")
 }
 
-// ──────────────────── SETTINGS ────────────────────
+// ──────────────────── SETTINGS ────────────────────────
 
 model Setting {
   id        String   @id @default(cuid())
