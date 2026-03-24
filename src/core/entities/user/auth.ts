@@ -1,5 +1,7 @@
 import type { UserDomain } from '../tenant/TenantContext';
 
+export type { UserDomain };
+
 export type TLoginRequest = {
 	username: string;
 	password: string;
