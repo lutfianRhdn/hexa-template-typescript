@@ -1,0 +1,120 @@
+// =============================================================
+// prisma/prisma-master.schema.prisma
+// Tier   : MASTER
+// Schema : master + public (static, Prisma-managed)
+// =============================================================
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/master-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["master", "public"]
+}
+
+// ──────────────────── ENUMS ────────────────────
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+  @@schema("public")
+}
+
+enum SchemaType {
+  MANAGEMENT
+  TENANT
+  @@schema("public")
+}
+
+enum SchemaRegistryStatus {
+  PROVISIONING
+  ACTIVE
+  SUSPENDED
+  DELETED
+  @@schema("public")
+}
+
+// ──────────────────── MASTER USER ────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([username])
+  @@map("users")
+  @@schema("master")
+}
+
+// ──────────────────── TENANT ────────────────────
+
+model Tenant {
+  id                     String       @id @default(cuid())
+  name                   String
+  slug                   String       @unique
+  schemaName             String       @unique
+  parentTenantId         String?
+  parent                 Tenant?      @relation("TenantHierarchy", fields: [parentTenantId], references: [id])
+  parentTenantSchemaName String?
+  status                 TenantStatus @default(ACTIVE)
+  allowChildTenants      Boolean      @default(false)
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+
+  children       Tenant[]        @relation("TenantHierarchy")
+  registry       SchemaRegistry?
+  domainMappings DomainMapping[]
+
+  @@index([schemaName])
+  @@index([parentTenantId])
+  @@index([status])
+  @@map("tenants")
+  @@schema("public")
+}
+
+// ──────────────────── SCHEMA REGISTRY ────────────────────
+
+model SchemaRegistry {
+  id              String               @id @default(cuid())
+  schemaName      String               @unique
+  type            SchemaType
+  ownerSchemaName String
+  status          SchemaRegistryStatus  @default(PROVISIONING)
+  provisionedAt   DateTime?
+  suspendedAt     DateTime?
+  deletedAt       DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+  tenantId String @unique
+
+  @@index([type])
+  @@index([ownerSchemaName])
+  @@index([status])
+  @@map("schema_registry")
+  @@schema("public")
+}
+
+// ──────────────────── DOMAIN MAPPING ────────────────────
+
+model DomainMapping {
+  id        String   @id @default(cuid())
+  domain    String   @unique
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([domain])
+  @@index([tenantId])
+  @@map("domain_mappings")
+  @@schema("public")
+}
