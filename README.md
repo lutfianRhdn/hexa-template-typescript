@@ -1,56 +1,68 @@
-# Hexagonal TypeScript API — Template Collection
+# Hexagonal TypeScript API — Base Template
 
-Template project REST API berbasis **Hexagonal Architecture** (Ports and Adapters)
-dengan TypeScript, Bun, Express, Prisma, dan PostgreSQL.
+Single-tenant REST API template berbasis **Hexagonal Architecture** (Ports and Adapters).
 
-## Tersedia Dua Template
+## Tech Stack
+- Runtime: **Bun**
+- Framework: **Express.js**
+- ORM: **Prisma** (PostgreSQL)
+- Auth: **JWT**
+- Validation: **Zod**
+- Logging: **Winston** + Daily Rotate
 
-| Template | Branch | Deskripsi |
-|---|---|---|
-| Base Template | `base-template` | Single-tenant, satu Prisma schema |
-| SaaS Template | `saas-template` | Multi-tenant, dual Prisma schema |
-
-## Cara Menggunakan
-
-### Mulai dari Base Template
+## Quick Start
 
 ```bash
-git clone <repo-url> my-project
-cd my-project
-git checkout base-template
-cp .env.example .env
-# Edit .env sesuai kebutuhan
+# Install dependencies
 bun install
+
+# Copy and edit env
+cp .env.example .env
+
+# Generate Prisma client
 bun run prisma:generate
+
+# Push schema to database
 bun run prisma:push
+
+# Run development server
 bun run start:dev
 ```
 
-### Mulai dari SaaS Template
+## Struktur Folder
 
-```bash
-git clone <repo-url> my-saas-project
-cd my-saas-project
-git checkout saas-template
-cp .env.example .env
-# Edit .env sesuai kebutuhan
-bun install
-bun run prisma:generate:all
-bun run prisma:push:all
-bun run prisma:seed
-bun run start:dev
+```
+src/
+├── configs/           # Environment, registry, logger
+├── adapters/
+│   └── postgres/      # Prisma adapter + repositories
+├── core/
+│   ├── entities/      # Domain types
+│   ├── repositories/  # Port interfaces
+│   ├── services/      # Business logic
+│   └── errors/        # Custom error hierarchy
+├── mappers/           # Entity & response mappers
+├── policies/          # Auth & role middleware
+├── transports/
+│   └── api/           # Express REST API
+│       ├── controllers/
+│       ├── routers/
+│       ├── validations/
+│       └── middlewares/
+└── utils/             # Logger, helpers
 ```
 
-## Struktur Arsitektur
+## Available Scripts
 
-Lihat [ARCHITECTURE.md](ARCHITECTURE.md) untuk penjelasan lengkap.
+| Script | Description |
+|---|---|
+| `bun run start:dev` | Start dev server with hot reload |
+| `bun run build` | Build TypeScript |
+| `bun run prisma:generate` | Generate Prisma client |
+| `bun run prisma:push` | Push schema to DB |
+| `bun run prisma:studio` | Open Prisma Studio |
+| `bun run test` | Run tests |
 
-## Panduan Kontribusi
+## Menambah Resource Baru
 
-Lihat [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## Skill Claude
-
-Kedua template dilengkapi file `.claude/SKILL.md` yang berisi panduan
-pengembangan untuk Claude AI. Install skill tersebut di Claude untuk
-mendapatkan bantuan yang context-aware dengan project ini.
+Lihat [CONTRIBUTING.md](../CONTRIBUTING.md) atau `.claude/SKILL.md` untuk panduan lengkap.
