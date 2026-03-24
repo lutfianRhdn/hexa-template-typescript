@@ -11,10 +11,11 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
   schemas  = ["master", "public"]
 }
 
-// ──────────────────── ENUMS ────────────────────
+// ──────────────────── ENUMS ────────────────────────
 
 enum TenantStatus {
   ACTIVE
@@ -37,7 +38,7 @@ enum SchemaRegistryStatus {
   @@schema("public")
 }
 
-// ──────────────────── MASTER USER ────────────────────
+// ──────────────────── MASTER USER ────────────────────────
 
 model User {
   id        String   @id @default(cuid())
@@ -52,7 +53,7 @@ model User {
   @@schema("master")
 }
 
-// ──────────────────── TENANT ────────────────────
+// ──────────────────── TENANT ────────────────────────
 
 model Tenant {
   id                     String       @id @default(cuid())
@@ -78,7 +79,7 @@ model Tenant {
   @@schema("public")
 }
 
-// ──────────────────── SCHEMA REGISTRY ────────────────────
+// ──────────────────── SCHEMA REGISTRY ────────────────────────
 
 model SchemaRegistry {
   id              String               @id @default(cuid())
@@ -102,7 +103,7 @@ model SchemaRegistry {
   @@schema("public")
 }
 
-// ──────────────────── DOMAIN MAPPING ────────────────────
+// ──────────────────── DOMAIN MAPPING ────────────────────────
 
 model DomainMapping {
   id        String   @id @default(cuid())
