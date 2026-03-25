@@ -1,79 +1,85 @@
 ---
-name: hexagonal-saas-template
-description: Guide for developing with the Hexagonal TypeScript SaaS Template (multi-tenant)
+name: SaaS Multi-Tenancy Architecture Review
+description: Review skill for SaaS applications with schema-based multi-tenancy and Hexagonal Architecture
 ---
 
-# Hexagonal SaaS Template — AI Development Guide
+# SaaS Multi-Tenancy Architecture Review Skill
 
-## Architecture Overview
+## Overview
+Comprehensive review skill for TypeScript SaaS backend with Hexagonal Architecture and schema-based multi-tenancy. Focuses on tenant isolation, data security, and architecture compliance.
 
-This is a **multi-tenant SaaS** REST API template using Hexagonal Architecture:
-- **Core** (domain): entities, repository interfaces (ports), services
-- **Adapters**: Prisma PostgreSQL with schema interception for multi-tenancy
-- **Transport**: Express REST API with domain gate and tenant context
+## Review Process
 
-## Multi-Tenant Data Flow
+### 1. Tenant Isolation (CRITICAL — Review First)
+- **Schema isolation** — Verify each tenant query uses tenant-specific Prisma client
+- **No cross-tenant access** — Check that data queries are scoped to tenant context
+- **Tenant context propagation** — Tenant resolved from request and passed through layers
+- **Master vs tenant client** — Verify correct Prisma client used per operation
+- **No hardcoded schemas** — Schema derived from tenant context, never hardcoded
+- **Tenant validation** — Tenant status checked before processing (active, suspended, etc.)
 
-### Domain Resolution
-1. `domainGate` middleware resolves the request domain (via Host header or `x-domain-dev` header)
-2. MASTER domain → platform admin context
-3. TENANT domain → lookup `domain_mappings` table, resolve tenant
+### 2. Architecture Compliance
+- **Layer separation** — `transports/ → core/ → adapters/` flow
+- **Dependency direction** — Inward only. Core NEVER imports from adapters/transports
+- **Service isolation** — Services use ports, NOT concrete repositories
+- **Repository encapsulation** — ONLY repos access Prisma
+- **Inheritance** — All services extend `Service`, all repos extend `Repository`
+- **Services are tenant-agnostic** — Services don't handle schema switching
 
-### Schema Interception
-`PrismaClientManager.patchClientOnConnect()` intercepts all SQL queries on the tenant's pg pool and replaces `tenant_template` with the actual tenant schema name (e.g., `tenant_abc123`).
+### 3. Type Safety
+- No `any` without justification
+- Tenant types properly defined
+- Return types explicit on public methods
+- Domain entities vs Prisma models separation
+- Master entities vs tenant entities properly separated
 
-### Prisma Client Injection
-Repositories receive their Prisma client via `setPrismaClient()`. The correct client (master or tenant-scoped) is injected from the controller layer based on the request context.
+### 4. Security
+- Input validation on all endpoints
+- Tenant middleware on all tenant-scoped routes
+- JWT includes tenant claim
+- Authorization checked per-tenant
+- No tenant IDs or schema names leaked in responses
+- Rate limiting per tenant
 
-## Adding a New Resource (Tenant-Scoped)
+### 5. Performance
+- No N+1 queries
+- Connection pooling accounts for multiple schemas
+- Pagination implemented
+- Tenant-specific caching where appropriate
 
-### Step 1: Define Entity Types
-Create `src/core/entities/<resource>/<resource>.ts`
+### 6. Data Migration Safety
+- Schema migrations don't conflict between master/tenant
+- Seed scripts are idempotent and tenant-aware
+- No destructive operations without tenant scoping
 
-### Step 2: Add Prisma Model to Business Schema
-Update `prisma/prisma-business.schema.prisma` and regenerate: `bun run prisma:generate:business`
+## Review Output Format
 
-### Step 3: Implement Repository (Adapter)
-Create repository extending base `Repository`. **Important**: do NOT hardcode the Prisma client. Use `setPrismaClient()` to receive it from the controller.
+```
+## Review Summary
+- **Overall**: PASS / NEEDS_CHANGES / REJECT
+- **Tenant Isolation**: ✅ / ❌
+- **Architecture Compliance**: ✅ / ❌
+- **Security**: ✅ / ❌
 
-### Step 4: Create Service
-Extend the base `Service` class.
-
-### Step 5: Create Controller
-In the controller, resolve the tenant Prisma client from `req.tenantPrisma` and inject it into the repository:
-```typescript
-import { TenantRequest } from '../../../core/entities/tenant/TenantContext';
-
-export class MyController extends Controller<TMyResponse, TMetadata> {
-  handleRequest = async (req: TenantRequest, res: Response) => {
-    const repo = new MyRepository();
-    repo.setPrismaClient(req.tenantPrisma); // Inject tenant-scoped client
-    const service = new MyService(repo);
-    // ... use service
-  };
-}
+## Findings
+### [🟥 Critical] Tenant Isolation Vulnerability
+- **File**: `src/adapters/repositories/order.repository.ts`
+- **Line**: 25
+- **Issue**: Using master Prisma client for tenant data query
+- **Fix**: Use tenant-scoped Prisma client
 ```
 
-### Step 6: Create Router
-Register it in `src/transports/api/routers/v1/index.ts` with appropriate middleware:
-```typescript
-import { authMiddleware } from '../../../../policies/authMiddleware';
-import { tenantContextMiddleware } from '../../../../policies/tenantContextMiddleware';
+## Common Anti-Patterns to Flag
 
-v1Router.use('/my-resource', authMiddleware, tenantContextMiddleware, myResourceRouter);
-```
-
-## Key Patterns
-
-### MASTER vs TENANT Routes
-- MASTER routes: Only `authMiddleware`, access `req.masterPrisma`
-- TENANT routes: `authMiddleware` + `tenantContextMiddleware`, access `req.tenantPrisma`
-
-### Creating a New Tenant
-Use `TenantSchemaProvisioner.provision(schemaName)` to clone the `tenant_template` schema. Then create the tenant record in master and add a domain mapping.
-
-### Error Handling
-Use custom errors from `src/core/errors/index.ts`. The error handler middleware catches them and returns standardized responses.
-
-### Response Format
-All responses follow: `{ status, message, data, metadata, errors }`
+| Anti-Pattern | Severity | Fix |
+|---|---|---|
+| Tenant data queried without tenant context | 🟥 Critical | Add tenant middleware |
+| Master client used for tenant data | 🟥 Critical | Use tenant client |
+| Hardcoded schema name | 🟥 Critical | Derive from tenant context |
+| Cross-tenant data access | 🟥 Critical | Scope query to tenant |
+| Service imports from adapters | 🟥 Critical | Use port interface |
+| Prisma used outside repository | 🟥 Critical | Move to repository |
+| Tenant ID leaked in response | 🟧 Warning | Remove from response |
+| Business logic in controller | 🟧 Warning | Move to service |
+| Missing tenant validation | 🟧 Warning | Add tenant status check |
+| `any` type usage | 🟧 Warning | Use proper type |

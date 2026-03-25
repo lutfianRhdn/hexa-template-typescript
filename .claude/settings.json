@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Terminal",
+      "Bash(npm run *)",
+      "Bash(npx prisma *)",
+      "Bash(npx ts-node *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(cat *)",
+      "Bash(ls *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(node *)",
+      "Bash(tsc --noEmit)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force *)",
+      "Bash(git reset --hard *)",
+      "Bash(DROP DATABASE *)",
+      "Bash(DROP TABLE *)",
+      "Bash(DROP SCHEMA *)",
+      "Bash(sudo *)"
+    ]
+  }
+}
