@@ -1,4 +1,28 @@
 {
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]
+    },
+    "git": {
+      "command": "npx",
+      "args": ["-y", "@cyanheads/git-mcp-server"],
+      "env": {
+        "GIT_REPOS_DIR": "."
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "${DATABASE_URL}"]
+    }
+  },
   "permissions": {
     "allow": [
       "Read",
@@ -15,7 +39,13 @@
       "Bash(find *)",
       "Bash(grep *)",
       "Bash(node *)",
-      "Bash(tsc --noEmit)"
+      "Bash(tsc --noEmit)",
+      "Bash(bun *)",
+      "Bash(docker *)",
+      "Bash(docker-compose *)",
+      "Bash(npm audit *)",
+      "Bash(npm outdated *)",
+      "Bash(gh *)"
     ],
     "deny": [
       "Bash(rm -rf *)",
