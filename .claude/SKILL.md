@@ -1,67 +1,92 @@
 ---
-name: hexagonal-base-template
-description: Guide for developing with the Hexagonal TypeScript Base Template (single-tenant)
+name: Hexagonal Architecture Code Review
+description: Comprehensive review skill for Hexagonal Architecture TypeScript backend projects
 ---
 
-# Hexagonal Base Template — AI Development Guide
+# Hexagonal Architecture Code Review Skill
 
-## Architecture Overview
+## Overview
+This skill provides structured guidance for reviewing TypeScript backend code built with Hexagonal Architecture (Ports & Adapters), ensuring architecture compliance, layer separation, and production-readiness.
 
-This is a **single-tenant** REST API template using Hexagonal Architecture:
-- **Core** (domain): entities, repository interfaces (ports), services
-- **Adapters**: Prisma PostgreSQL implementation
-- **Transport**: Express REST API
+## Review Process
 
-## Adding a New Resource
+### 1. Architecture Compliance (CRITICAL)
+- **Layer separation** — Verify `transports/ → core/ → adapters/` flow
+- **Dependency direction** — Inward only. Core NEVER imports from adapters or transports
+- **Service isolation** — Services use ports (interfaces), NOT concrete repositories
+- **Repository encapsulation** — ONLY repositories access Prisma client
+- **Controller responsibility** — Controllers instantiate repos, inject into services, format responses
+- **Inheritance** — All services extend `Service`, all repositories extend `Repository`
 
-### Step 1: Define Entity Types
-Create `src/core/entities/<resource>/<resource>.ts`:
-```typescript
-export type TResource = {
-  id: string;
-  name: string;
-  // ... fields matching Prisma model
-  createdAt: Date;
-  updatedAt: Date;
-}
+### 2. Dependency Injection Validation
+- Repositories must be created in controllers and passed to service constructors
+- Services must NOT instantiate their own repositories
+- Check constructor signatures for proper injection pattern
+- Validate that services are framework-agnostic (no Express imports)
+
+### 3. Type Safety
+- No `any` without documented justification
+- All interfaces in `src/core/entities/`
+- Return types explicit on public methods
+- Proper null/undefined handling
+- Domain entities used in service layer, NOT Prisma types
+
+### 4. Mapper Usage
+- All data transformation through mappers in `src/mappers/`
+- camelCase in code, snake_case in API responses and DB
+- No inline field mapping
+
+### 5. Error Handling
+- Custom error classes with statusCode and errorCode
+- Async errors caught and propagated
+- No swallowed errors
+- Consistent error response format
+- No sensitive data in error messages
+
+### 6. Security
+- Input validation on all endpoints (transport layer)
+- Authentication middleware applied
+- Authorization checks via policies
+- No SQL injection (Prisma parameterized queries)
+- Environment variables for secrets
+
+### 7. Performance
+- No N+1 queries
+- Pagination implemented
+- Selective field fetching
+- Parallel async operations where possible
+
+### 8. Code Quality
+- SRP: Small, focused functions
+- DRY: No duplication
+- Clear naming matching conventions
+- Comments explain WHY, not WHAT
+
+## Review Output Format
+
+```
+## Review Summary
+- **Overall**: PASS / NEEDS_CHANGES / REJECT
+- **Architecture Compliance**: ✅ / ❌
+- **Type Safety**: ✅ / ❌
+- **Security**: ✅ / ❌
+
+## Findings
+### [🟡 Warning] Finding Title
+- **File**: `src/core/services/user.service.ts`
+- **Line**: 42
+- **Issue**: Service directly imports repository
+- **Fix**: Use port interface instead
 ```
 
-### Step 2: Define Repository Interface (Port)
-Create `src/core/repositories/<resource>/<Resource>Repository.ts`:
-```typescript
-import Repository from "../Repository";
-import { TResource } from "../../entities/<resource>/<resource>";
+## Common Anti-Patterns to Flag
 
-export default interface ResourceRepository extends Repository<TResource> {
-  // Add custom query methods here
-}
-```
-
-### Step 3: Add Prisma Model
-Update `prisma/schema.prisma` with the new model.
-
-### Step 4: Implement Repository (Adapter)
-Create `src/adapters/postgres/repositories/<Resource>Repository.ts` extending the base Repository.
-
-### Step 5: Create Service
-Create `src/core/services/<Resource>Service.ts` extending Service.
-
-### Step 6: Create Controller
-Create `src/transports/api/controllers/<Resource>Controller.ts` extending Controller.
-
-### Step 7: Create Router
-Create `src/transports/api/routers/v1/<resources>.router.ts` and register it in `index.ts`.
-
-### Step 8: Add Validation
-Create `src/transports/api/validations/<resource>.validation.ts` with Zod schemas.
-
-## Key Patterns
-
-### Repository Injection
-Repositories receive PrismaClient via `setPrismaClient()`. In the base template, this is the single global `prisma` instance from `src/adapters/postgres/instance.ts`.
-
-### Response Format
-All responses follow: `{ status, message, data, metadata, errors }`
-
-### Error Handling
-Use custom errors from `src/core/errors/index.ts`: `NotFoundError`, `ValidationError`, `AuthenticationError`, etc.
+| Anti-Pattern | Severity | Fix |
+|---|---|---|
+| Service imports from adapters | 🟥 Critical | Use port interface |
+| Prisma used outside repository | 🟥 Critical | Move to repository |
+| Business logic in controller | 🟧 Warning | Move to service |
+| Service doesn't extend base class | 🟧 Warning | Add `extends Service` |
+| Inline field mapping | 🟡 Info | Use mapper |
+| Missing input validation | 🟧 Warning | Add at transport layer |
+| `any` type usage | 🟧 Warning | Use proper type |
